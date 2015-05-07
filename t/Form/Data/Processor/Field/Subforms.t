@@ -183,20 +183,20 @@ package main {
             is_deeply(
                 $form->dump_errors,
                 {
-                    'data.text' => ['Field value is not a valid text'], 
-                    'data.compound.text' => ['Field value is not a valid text'], 
+                    'data.text' => ['Field value is not a valid text'],
+                    'data.compound.text' => ['Field value is not a valid text'],
 
-                    'data.compound.repeatable.0.list' => ['Value is not allowed'], 
-                    'data.compound.repeatable.0.text' => ['Field value is not a valid text'], 
-                    'data.compound.repeatable.0.compound.int' => ['Field value is not a valid integer number'], 
-                    'data.compound.repeatable.0.compound.float' => ['Field value is not a valid number'], 
+                    'data.compound.repeatable.0.list' => ['Value is not allowed'],
+                    'data.compound.repeatable.0.text' => ['Field value is not a valid text'],
+                    'data.compound.repeatable.0.compound.int' => ['Field value is not a valid integer number'],
+                    'data.compound.repeatable.0.compound.float' => ['Field value is not a valid number'],
 
-                    'data.compound.repeatable.1.list' => ['Value is not allowed'], 
-                    'data.compound.repeatable.1.text' => ['Field value is not a valid text'], 
-                    'data.compound.repeatable.1.compound.int' => ['Field value is not a valid integer number'], 
-                    'data.compound.repeatable.1.compound.float' => ['Field value is not a valid number'], 
+                    'data.compound.repeatable.1.list' => ['Value is not allowed'],
+                    'data.compound.repeatable.1.text' => ['Field value is not a valid text'],
+                    'data.compound.repeatable.1.compound.int' => ['Field value is not a valid integer number'],
+                    'data.compound.repeatable.1.compound.float' => ['Field value is not a valid number'],
 
-                    'data.compound.repeatable.2' => ['Field is invalid'], 
+                    'data.compound.repeatable.2' => ['Field is invalid'],
                 },
                 "Error messages ($_)"
             );
