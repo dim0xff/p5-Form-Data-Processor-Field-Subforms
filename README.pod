@@ -1,0 +1,101 @@
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+Form::Data::Processor::Field::Subforms - use forms like subfields
+
+=head1 SYNOPSIS
+
+    package Shipping::Free {
+        use Form::Data::Processor::Moose;
+        extends 'Form::Data::Processor::Form';
+
+        has_field available_hours => (...);
+    };
+
+    package Shipping::ByOurStore {
+        use Form::Data::Processor::Moose;
+        extends 'Form::Data::Processor::Form';
+
+        has_field cost_per_order   => (...);
+        has_field cost_per_product => (...);
+        has_field handling_fee     => (...);
+    };
+
+    package Shipping::USPS {
+        use Form::Data::Processor::Moose;
+        extends 'Form::Data::Processor::Form';
+
+        has_field package_size            => (...);
+        has_field domestic_mail_type      => (...);
+        has_field international_mail_type => (...);
+    };
+
+
+    package Shipping {
+        use Form::Data::Processor::Moose;
+        extends 'Form::Data::Processor::Form';
+
+        has_field method => (
+            type    => 'List::Single',
+            options => [ 'Free', 'ByOurStore', 'USPS' ]
+        );
+
+        has_field method_data => (
+            type           => 'Subforms',
+            form_namespace => 'Shipping',
+            name_field     => 'method',
+        );
+    }
+
+
+    # ...
+    # And later
+    #
+
+    my $form = Shipping->new;
+    $form->process(
+        {
+            method      => 'ByOurStore',
+            method_data => {
+                cost_per_order   => 10.00,
+                cost_per_product => 0.50,
+                handling_fee     => 3.00,
+            },
+        }
+    ) or do {
+        if ( $form->field('method_data.handling_fee')->has_errors ) {
+            die "Incorrect handling fee:", $form->field('method_data.handling_fee')->all_errors;
+        }
+
+        ...
+    }
+
+=head1 DESCRIPTION
+
+This add ability to use some forms like subfields in current form. To
+determine which "subform" will be used, it uses result from
+Form::Data::Processor::Field::List::Single field.
+
+Before field is "ready" in Form::Data::Processor::Field it tries to load
+all classes via "form_namespace" and field ("name_field"). If some field
+option is fire error, while class for this option is being tried
+loading, then this options mark as disabled. Loading uses next notation:
+"form_namespace"::"name_field option value".
+
+On validating, input params will be passed to "subform" to validate.
+
+=head1 AUTHOR
+
+Dmitry "dim0xff" Latin <dim0xff@gmail.com>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2015 by Dmitry Latin.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

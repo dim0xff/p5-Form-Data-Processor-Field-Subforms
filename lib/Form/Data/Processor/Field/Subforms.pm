@@ -1,6 +1,6 @@
 package Form::Data::Processor::Field::Subforms;
 
-# ABSTRACT: use forms like fields
+# ABSTRACT: use forms like subfields
 
 use Form::Data::Processor::Moose;
 use namespace::autoclean;
@@ -134,14 +134,19 @@ around validate => sub {
 
     return if $self->has_errors || !$self->has_value || !defined $self->value;
 
-    my $subform_name = $self->parent->field( $self->name_field )->result;
+    my $subform_name = $self->parent->field( $self->name_field )->value;
 
     if ( !$subform_name ) {
         $self->clear_value;
         return;
     }
 
-    my $subform = $self->subform( $self->get_subform($subform_name) );
+    # Value to List::Single could be passed as array and as scalar.
+    # Get the scalar value!
+    $subform_name = $subform_name->[0] if ref $subform_name eq 'ARRAY';
+
+    my $subform = $self->subform( $self->get_subform($subform_name) )
+        or die "No such subform for '$subform_name'";
 
     $subform->params( $self->value );
     $subform->init_input( $subform->params );
@@ -189,3 +194,134 @@ __PACKAGE__->meta->make_immutable;
 1;
 
 __END__
+
+=head1 SYNOPSIS
+
+    package Shipping::Free {
+        use Form::Data::Processor::Moose;
+        extends 'Form::Data::Processor::Form';
+
+        has_field available_hours => (...);
+    };
+
+    package Shipping::ByOurStore {
+        use Form::Data::Processor::Moose;
+        extends 'Form::Data::Processor::Form';
+
+        has_field cost_per_order   => (...);
+        has_field cost_per_product => (...);
+        has_field handling_fee     => (...);
+    };
+
+    package Shipping::USPS {
+        use Form::Data::Processor::Moose;
+        extends 'Form::Data::Processor::Form';
+
+        has_field package_size            => (...);
+        has_field domestic_mail_type      => (...);
+        has_field international_mail_type => (...);
+    };
+
+
+    package Shipping {
+        use Form::Data::Processor::Moose;
+        extends 'Form::Data::Processor::Form';
+
+        has_field method => (
+            type    => 'List::Single',
+            options => [ 'Free', 'ByOurStore', 'USPS' ]
+        );
+
+        has_field method_data => (
+            type           => 'Subforms',
+            form_namespace => 'Shipping',
+            name_field     => 'method',
+        );
+    }
+
+
+    # ...
+    # And later
+    #
+
+    my $form = Shipping->new;
+    $form->process(
+        {
+            method      => 'ByOurStore',
+            method_data => {
+                cost_per_order   => 10.00,
+                cost_per_product => 0.50,
+                handling_fee     => 3.00,
+            },
+        }
+    ) or do {
+        if ( $form->field('method_data.handling_fee')->has_errors ) {
+            die "Incorrect handling fee:", $form->field('method_data.handling_fee')->all_errors;
+        }
+
+        ...
+    };
+
+=head1 DESCRIPTION
+
+This add ability to use some forms like subfields in current form.
+To determine which "subform" will be used, it uses result from
+L<Form::Data::Processor::Field::List::Single> field.
+
+Before field is L<Form::Data::Processor::Field/ready> it tries to load all classes
+via L</form_namespace> and field (L</name_field>). If some field option is fire
+error, while class for this option is being tried loading, then this options mark
+as disabled.
+Loading uses next notation: C<form_namespace>::C<name_field option value>.
+
+On validating, input params will be passed to L</subform> to validate.
+
+Implement methods, which screen the same methods on child form:
+
+=over 4
+
+=item all_error_fields
+
+=item all_fields
+
+=item error_fields
+
+=item field
+
+=item subfield
+
+=back
+
+
+=attr form_namespace
+
+=over 4
+
+=item Type: Str
+
+=item Required
+
+=back
+
+Name space for subform loading.
+
+
+=attr name_field
+
+=over 4
+
+=item Type: Str
+
+=item Required
+
+=back
+
+Field name for L<Form::Data::Processor::Field::List::Single> field from C<parent>.
+
+B<Notice:> field in C<parent> must be defined I<before> current field.
+
+=attr subform
+
+Current validating subform.
+
+B<Notice:> normally is being set by Form::Data::Processor internals.

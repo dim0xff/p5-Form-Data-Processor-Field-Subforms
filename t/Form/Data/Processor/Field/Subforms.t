@@ -173,7 +173,7 @@ package main {
                                 ],
                             }
                         },
-                        validator => 'F1',
+                        validator => ['F1'],
                     }
                 ),
                 "Process with error ($_)"
