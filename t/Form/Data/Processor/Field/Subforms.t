@@ -123,7 +123,7 @@ package Form {
 
 
 package main {
-    local $SIG{__WARN__} = sub {};
+    local $SIG{__WARN__} = sub { };
 
     my $form = Form->new;
 
@@ -189,12 +189,12 @@ package main {
                     'data.compound.repeatable.0.list' => ['Value is not allowed'],
                     'data.compound.repeatable.0.text' => ['Field value is not a valid text'],
                     'data.compound.repeatable.0.compound.int' => ['Field value is not a valid integer number'],
-                    'data.compound.repeatable.0.compound.float' => ['Field value is not a valid number'],
+                    'data.compound.repeatable.0.compound.float' => ['Field value is not a valid float number'],
 
                     'data.compound.repeatable.1.list' => ['Value is not allowed'],
                     'data.compound.repeatable.1.text' => ['Field value is not a valid text'],
                     'data.compound.repeatable.1.compound.int' => ['Field value is not a valid integer number'],
-                    'data.compound.repeatable.1.compound.float' => ['Field value is not a valid number'],
+                    'data.compound.repeatable.1.compound.float' => ['Field value is not a valid float number'],
 
                     'data.compound.repeatable.2' => ['Field is invalid'],
                 },

@@ -75,17 +75,16 @@ Form::Data::Processor::Field::Subforms - use forms like subfields
 
 =head1 DESCRIPTION
 
-This add ability to use some forms like subfields in current form. To
-determine which "subform" will be used, it uses result from
-Form::Data::Processor::Field::List::Single field.
+This add ability to use some forms like subfields in current form.
+To determine which "subform" will be used, it uses result from
+L<Form::Data::Processor::Field::List::Single> field.
 
-Before field is "ready" in Form::Data::Processor::Field it tries to load
-all classes via "form_namespace" and field ("name_field"). If some field
-option is fire error, while class for this option is being tried
-loading, then this options mark as disabled. Loading uses next notation:
-"form_namespace"::"name_field option value".
+Before field is L<Form::Data::Processor::Field/ready> it tries to load all classes
+via L</form_namespace> and field (L</name_field>). If some field option fires
+error, while class for this option is being tried to load, then this option is marked
+"disabled". Loading uses next notation: C<form_namespace>::C<name_field option value>.
 
-On validating, input params will be passed to "subform" to validate.
+On validating, input params will be passed to L</subform> to validate.
 
 =head1 AUTHOR
 

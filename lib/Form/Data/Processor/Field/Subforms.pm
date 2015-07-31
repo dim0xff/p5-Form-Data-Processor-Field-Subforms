@@ -126,24 +126,13 @@ around clone => sub {
     return $clone;
 };
 
-around validate => sub {
-    my $orig = shift;
+sub internal_validation {
     my $self = shift;
-
-    $self->$orig(@_);
 
     return if $self->has_errors || !$self->has_value || !defined $self->value;
 
-    my $subform_name = $self->parent->field( $self->name_field )->value;
-
-    if ( !$subform_name ) {
-        $self->clear_value;
-        return;
-    }
-
-    # Value to List::Single could be passed as array and as scalar.
-    # Get the scalar value!
-    $subform_name = $subform_name->[0] if ref $subform_name eq 'ARRAY';
+    my $subform_name = $self->parent->field( $self->name_field )->result
+        or return $self->clear_value;
 
     my $subform = $self->subform( $self->get_subform($subform_name) )
         or die "No such subform for '$subform_name'";
@@ -157,7 +146,7 @@ around validate => sub {
 
         $self->add_error($_) for $subform->all_errors;
     }
-};
+}
 
 sub _result {
     my $self = shift;
@@ -269,10 +258,9 @@ To determine which "subform" will be used, it uses result from
 L<Form::Data::Processor::Field::List::Single> field.
 
 Before field is L<Form::Data::Processor::Field/ready> it tries to load all classes
-via L</form_namespace> and field (L</name_field>). If some field option is fire
-error, while class for this option is being tried loading, then this options mark
-as disabled.
-Loading uses next notation: C<form_namespace>::C<name_field option value>.
+via L</form_namespace> and field (L</name_field>). If some field option fires
+error, while class for this option is being tried to load, then this option is marked
+"disabled". Loading uses next notation: C<form_namespace>::C<name_field option value>.
 
 On validating, input params will be passed to L</subform> to validate.
 
