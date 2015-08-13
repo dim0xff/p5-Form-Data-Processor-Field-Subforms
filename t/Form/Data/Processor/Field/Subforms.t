@@ -4,6 +4,7 @@ use warnings;
 use lib 't/lib';
 
 use Test::Most;
+use Test::Memory::Cycle;
 
 package Subform::F0 {
     use Form::Data::Processor::Moose;
@@ -126,6 +127,7 @@ package main {
     local $SIG{__WARN__} = sub { };
 
     my $form = Form->new;
+    memory_cycle_ok( $form, 'No memory cycles on ->new' );
 
     subtest ready => sub {
         is_deeply(
@@ -266,5 +268,6 @@ package main {
         ok( $form->validated, 'And original is fine' );
     };
 
+    memory_cycle_ok( $form, 'Still no memory cycles' );
     done_testing();
 };
