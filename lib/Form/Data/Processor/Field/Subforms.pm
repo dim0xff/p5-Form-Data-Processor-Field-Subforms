@@ -107,13 +107,17 @@ before clear_value => sub {
     $self->_clear_subform;
 };
 
+after generate_full_name => sub {
+    my $self = shift;
+
+    $_->[1]->generate_full_name for $self->_all_subforms;
+};
 
 around clone => sub {
     my $orig = shift;
     my $self = shift;
 
     my %subforms = map { $_->[0] => $_->[1]->clone } $self->_all_subforms;
-
 
     my $clone = $self->$orig( _subforms => \%subforms, @_ );
 

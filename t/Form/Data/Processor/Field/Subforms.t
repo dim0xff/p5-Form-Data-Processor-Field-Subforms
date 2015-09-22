@@ -105,21 +105,27 @@ package Subform::F1 {
     );
 };
 
-package Form {
+package Field {
     use Form::Data::Processor::Moose;
-    extends 'Form::Data::Processor::Form';
-    with 'Form::Data::Processor::TraitFor::Form::DumpErrors';
+    extends 'Form::Data::Processor::Field::Compound';
 
-    has_field validator => (
-        type    => 'List::Single',
-        options => [ 'F0', 'F1', 'F2' ],
-    );
+    has_field validator => ( type => 'List::Single', );
 
     has_field data => (
         type           => 'Subforms',
         form_namespace => 'Subform',
         name_field     => 'validator',
     );
+};
+
+package Form {
+    use Form::Data::Processor::Moose;
+    extends 'Form::Data::Processor::Form';
+    with 'Form::Data::Processor::TraitFor::Form::DumpErrors';
+
+    has_field 'list'                     => ( type    => 'Repeatable' );
+    has_field 'list.contains'            => ( type    => '+Field' );
+    has_field '+list.contains.validator' => ( options => [ 'F0', 'F1', 'F2' ] );
 };
 
 
@@ -134,14 +140,14 @@ package main {
             [
                 map +{ $_->[0] => ref $_->[1] },
                 sort { $a->[0] cmp $b->[0] }
-                    $form->field('data')->_all_subforms
+                    $form->field('list')->contains->field('data')
+                    ->_all_subforms
             ],
             [ { F0 => 'Subform::F0' }, { F1 => 'Subform::F1' } ],
             'Subform are ready'
         );
-
         is_deeply(
-            $form->field('validator')->options,
+            $form->field('list')->contains->field('validator')->options,
             [
                 { value => 'F0' },
                 { value => 'F1' },
@@ -156,26 +162,30 @@ package main {
             ok(
                 !$form->process(
                     {
-                        data => {
-                            text     => {},
-                            compound => {
-                                text       => [],
-                                repeatable => [
-                                    (
-                                        {
-                                            list     => [ '1O', '2O' ],
-                                            text     => {},
-                                            compound => {
-                                                int   => 1.23,
-                                                float => 'abc',
-                                            }
-                                        }
-                                    ) x 2,
-                                    []
-                                ],
+                        list => [
+                            {
+                                data => {
+                                    text     => {},
+                                    compound => {
+                                        text       => [],
+                                        repeatable => [
+                                            (
+                                                {
+                                                    list     => [ '1O', '2O' ],
+                                                    text     => {},
+                                                    compound => {
+                                                        int   => 1.23,
+                                                        float => 'abc',
+                                                    }
+                                                }
+                                            ) x 2,
+                                            []
+                                        ],
+                                    }
+                                },
+                                validator => ['F1'],
                             }
-                        },
-                        validator => ['F1'],
+                        ]
                     }
                 ),
                 "Process with error ($_)"
@@ -185,20 +195,20 @@ package main {
             is_deeply(
                 $form->dump_errors,
                 {
-                    'data.text' => ['Field value is not a valid text'],
-                    'data.compound.text' => ['Field value is not a valid text'],
+                    'list.0.data.text' => ['Field value is not a valid text'],
+                    'list.0.data.compound.text' => ['Field value is not a valid text'],
 
-                    'data.compound.repeatable.0.list' => ['Value is not allowed'],
-                    'data.compound.repeatable.0.text' => ['Field value is not a valid text'],
-                    'data.compound.repeatable.0.compound.int' => ['Field value is not a valid integer number'],
-                    'data.compound.repeatable.0.compound.float' => ['Field value is not a valid float number'],
+                    'list.0.data.compound.repeatable.0.list' => ['Value is not allowed'],
+                    'list.0.data.compound.repeatable.0.text' => ['Field value is not a valid text'],
+                    'list.0.data.compound.repeatable.0.compound.int' => ['Field value is not a valid integer number'],
+                    'list.0.data.compound.repeatable.0.compound.float' => ['Field value is not a valid float number'],
 
-                    'data.compound.repeatable.1.list' => ['Value is not allowed'],
-                    'data.compound.repeatable.1.text' => ['Field value is not a valid text'],
-                    'data.compound.repeatable.1.compound.int' => ['Field value is not a valid integer number'],
-                    'data.compound.repeatable.1.compound.float' => ['Field value is not a valid float number'],
+                    'list.0.data.compound.repeatable.1.list' => ['Value is not allowed'],
+                    'list.0.data.compound.repeatable.1.text' => ['Field value is not a valid text'],
+                    'list.0.data.compound.repeatable.1.compound.int' => ['Field value is not a valid integer number'],
+                    'list.0.data.compound.repeatable.1.compound.float' => ['Field value is not a valid float number'],
 
-                    'data.compound.repeatable.2' => ['Field is invalid'],
+                    'list.0.data.compound.repeatable.2' => ['Field is invalid'],
                 },
                 "Error messages ($_)"
             );
@@ -209,23 +219,27 @@ package main {
             ok(
                 $form->process(
                     {
-                        data => {
-                            text     => 'The text',
-                            compound => {
-                                text       => 'The text',
-                                repeatable => [
-                                    {
-                                        list     => [ 'O1', 'O2' ],
-                                        text     => 'The text',
-                                        compound => {
-                                            int   => 1,
-                                            float => 1.23,
-                                        }
-                                    },
-                                ],
+                        list => [
+                            {
+                                data => {
+                                    text     => 'The text',
+                                    compound => {
+                                        text       => 'The text',
+                                        repeatable => [
+                                            {
+                                                list     => [ 'O1', 'O2' ],
+                                                text     => 'The text',
+                                                compound => {
+                                                    int   => 1,
+                                                    float => 1.23,
+                                                }
+                                            },
+                                        ],
+                                    }
+                                },
+                                validator => 'F1',
                             }
-                        },
-                        validator => 'F1',
+                        ]
                     }
                 ),
                 "Form processed ($_)"
@@ -234,23 +248,27 @@ package main {
             is_deeply(
                 $form->result,
                 {
-                    data => {
-                        text     => 'The text',
-                        compound => {
-                            text       => 'The text',
-                            repeatable => [
-                                {
-                                    list     => [ 'O1', 'O2' ],
-                                    text     => 'The text',
-                                    compound => {
-                                        int   => 1,
-                                        float => 1.23,
-                                    }
-                                },
-                            ],
+                    list => [
+                        {
+                            data => {
+                                text     => 'The text',
+                                compound => {
+                                    text       => 'The text',
+                                    repeatable => [
+                                        {
+                                            list     => [ 'O1', 'O2' ],
+                                            text     => 'The text',
+                                            compound => {
+                                                int   => 1,
+                                                float => 1.23,
+                                            }
+                                        },
+                                    ],
+                                }
+                            },
+                            validator => 'F1',
                         }
-                    },
-                    validator => 'F1',
+                    ]
                 },
                 "Result #$_"
             );
@@ -260,10 +278,14 @@ package main {
     subtest clone => sub {
         my $clone = $form->clone;
 
-        ok( !$clone->field('data')->has_subform, 'Subform is not loaded' );
+        ok( !$clone->field('list.0.data')->has_subform, 'Subform is not loaded' );
 
-        ok( !$clone->process( { data => { text => [] }, validator => 'F1' } ),
-            'Clone validated with error' );
+        ok(
+            !$clone->process(
+                { list => [ { data => { text => [] }, validator => 'F1' } ] }
+            ),
+            'Clone validated with error'
+        );
 
         ok( $form->validated, 'And original is fine' );
     };
