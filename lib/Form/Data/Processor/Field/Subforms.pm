@@ -2,7 +2,7 @@ package Form::Data::Processor::Field::Subforms;
 
 # ABSTRACT: use forms like subfields
 
-use Form::Data::Processor::Moose;
+use Form::Data::Processor::Moose 0.5.0;
 use namespace::autoclean;
 
 extends 'Form::Data::Processor::Field';
