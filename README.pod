@@ -34,6 +34,10 @@ Form::Data::Processor::Field::Subforms - use forms like subfields
     };
 
 
+    #
+    # Multi-subform mode
+    # Dynamicaly load and validate data basing on `method` field value
+
     package Shipping {
         use Form::Data::Processor::Moose;
         extends 'Form::Data::Processor::Form';
@@ -51,9 +55,7 @@ Form::Data::Processor::Field::Subforms - use forms like subfields
     }
 
 
-    # ...
-    # And later
-    #
+    # ... and later
 
     my $form = Shipping->new;
     $form->process(
@@ -71,7 +73,44 @@ Form::Data::Processor::Field::Subforms - use forms like subfields
         }
 
         ...
+    };
+
+
+    #
+    # Single-subform mode
+    #
+
+    package Shipping::ByOurStore {
+        use Form::Data::Processor::Moose;
+        extends 'Form::Data::Processor::Form';
+
+        has_field method_data => (
+            type           => 'Subforms',
+            form_namespace => 'Shipping',
+            single_subform => 1,
+            subform_name   => 'ByOurStore',
+        );
     }
+
+
+    # ... and later
+
+    my $form = Shipping::ByOurStore->new;
+    $form->process(
+        {
+            method_data => {
+                cost_per_order   => 10.00,
+                cost_per_product => 0.50,
+                handling_fee     => 3.00,
+            },
+        }
+    ) or do {
+        if ( $form->field('method_data.handling_fee')->has_errors ) {
+            die "Incorrect handling fee:", $form->field('method_data.handling_fee')->all_errors;
+        }
+
+        ...
+    };
 
 =head1 DESCRIPTION
 
@@ -86,13 +125,85 @@ error, while class for this option is being tried to load, then this option is m
 
 On validating, input params will be passed to L</subform> to validate.
 
+Implement methods, which screen the same methods on child form:
+
+=over 4
+
+=item all_error_fields
+
+=item all_fields
+
+=item error_fields
+
+=item field
+
+=item subfield
+
+=back
+
+=head1 ATTRIBUTES
+
+=head2 form_namespace
+
+=over 4
+
+=item Type: Str
+
+=item Required
+
+=back
+
+Name space for subform loading.
+
+=head2 name_field
+
+=over 4
+
+=item Type: Str
+
+=item Required (when L</single_subform> is C<false>)
+
+=back
+
+Field name for L<Form::Data::Processor::Field::List::Single> field from C<parent>.
+
+B<Notice:> field in C<parent> must be defined I<before> current field.
+
+=head2 single_subform
+
+=over 4
+
+=item Type: Bool
+
+=back
+
+When C<true> then use single-subform mode (see L</SYNOPSIS> for info).
+
+=head2 subform_name
+
+=over 4
+
+=item Type: Str
+
+=item Required (when L</single_subform> is C<true>)
+
+=back
+
+Subform name which will be used to create validation subform.
+
+=head2 subform
+
+Current validating subform.
+
+B<Notice:> normally is being set by Form::Data::Processor internals.
+
 =head1 AUTHOR
 
 Dmitry "dim0xff" Latin <dim0xff@gmail.com>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2015 by Dmitry Latin.
+This software is copyright (c) 2017 by Dmitry Latin.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

@@ -1,3 +1,6 @@
+0.0.4     Mon Jun  5 01:11:58 2017 +0300
+    - Add single-subform mode
+
 0.0.3     Tue Sep 22 13:54:43 2015 +0300
     - Add Changes
     - Fix full_name for subforms
