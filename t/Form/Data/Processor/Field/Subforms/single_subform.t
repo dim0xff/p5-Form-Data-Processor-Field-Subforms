@@ -82,8 +82,8 @@ package Field {
     has_field data => (
         type           => 'Subforms',
         form_namespace => 'Subform',
-        single_subform => 1, 
-        subform_name => 'F1', 
+        single_subform => 1,
+        subform_name => 'F1',
     );
 };
 
